@@ -4,3 +4,6 @@ users.db
 uploads/
 reports/
 *.pyc
+
+data/
+*.db
