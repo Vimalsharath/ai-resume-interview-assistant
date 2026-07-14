@@ -1,27 +1,29 @@
 import sqlite3
 import os
-os.makedirs("data", exist_ok=True)
 
 
-DATABASE = "interview.db"
+os.makedirs(
+    "data",
+    exist_ok=True
+)
+
+
+DATABASE = "data/interview.db"
 
 
 
 def get_connection():
 
-    conn = sqlite3.connect(
+    return sqlite3.connect(
         DATABASE,
         check_same_thread=False
     )
-
-    return conn
 
 
 
 def create_tables():
 
     conn = get_connection()
-
     cursor = conn.cursor()
 
 
@@ -33,7 +35,6 @@ def create_tables():
         password TEXT
     )
     """)
-
 
 
     cursor.execute("""
@@ -50,9 +51,75 @@ def create_tables():
 
 
     conn.commit()
+    conn.close()
+
+
+
+# =========================
+# AUTH FUNCTIONS
+# =========================
+
+
+def create_user(username, password):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        INSERT INTO users
+        (
+            username,
+            password
+        )
+        VALUES (?,?)
+        """,
+        (
+            username,
+            password
+        )
+    )
+
+
+    conn.commit()
+    conn.close()
+
+
+
+def verify_user(username, password):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE username=? 
+        AND password=?
+        """,
+        (
+            username,
+            password
+        )
+    )
+
+
+    user = cursor.fetchone()
+
 
     conn.close()
 
+
+    return user
+
+
+
+# =========================
+# INTERVIEW FUNCTIONS
+# =========================
 
 
 def save_interview(
@@ -64,7 +131,6 @@ def save_interview(
 ):
 
     conn = get_connection()
-
     cursor = conn.cursor()
 
 
@@ -79,9 +145,8 @@ def save_interview(
             score
         )
 
-        VALUES (?, ?, ?, ?, ?)
+        VALUES(?,?,?,?,?)
         """,
-
         (
             username,
             question,
@@ -89,12 +154,10 @@ def save_interview(
             feedback,
             score
         )
-
     )
 
 
     conn.commit()
-
     conn.close()
 
 
@@ -102,26 +165,23 @@ def save_interview(
 def get_history(username):
 
     conn = get_connection()
-
     cursor = conn.cursor()
 
 
     cursor.execute(
         """
-        SELECT question, answer, feedback, score
+        SELECT question,answer,feedback,score
         FROM interviews
         WHERE username=?
         """,
-
         (username,)
-
     )
 
 
-    data = cursor.fetchall()
+    result = cursor.fetchall()
 
 
     conn.close()
 
 
-    return data
+    return result
