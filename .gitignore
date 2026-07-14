@@ -1,0 +1,6 @@
+__pycache__/
+.env
+users.db
+uploads/
+reports/
+*.pyc
