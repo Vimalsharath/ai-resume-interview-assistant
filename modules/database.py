@@ -62,30 +62,39 @@ def create_tables():
 
 def create_user(username, password):
 
-    conn = get_connection()
-    cursor = conn.cursor()
+    try:
+
+        conn = get_connection()
+        cursor = conn.cursor()
 
 
-    cursor.execute(
-        """
-        INSERT INTO users
-        (
-            username,
-            password
+        cursor.execute(
+            """
+            INSERT INTO users
+            (
+                username,
+                password
+            )
+            VALUES (?,?)
+            """,
+            (
+                username,
+                password
+            )
         )
-        VALUES (?,?)
-        """,
-        (
-            username,
-            password
-        )
-    )
 
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
 
 
+        return True
+
+
+    except sqlite3.IntegrityError:
+
+        return False
+    
 
 def verify_user(username, password):
 
@@ -97,7 +106,7 @@ def verify_user(username, password):
         """
         SELECT *
         FROM users
-        WHERE username=? 
+        WHERE username=?
         AND password=?
         """,
         (
@@ -113,8 +122,7 @@ def verify_user(username, password):
     conn.close()
 
 
-    return user
-
+    return user    
 
 
 # =========================
