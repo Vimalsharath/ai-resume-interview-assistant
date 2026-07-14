@@ -8,7 +8,7 @@ os.makedirs(
 )
 
 
-DATABASE = "data/interview.db"
+DATABASE = "data/interview_new.db"
 
 
 
