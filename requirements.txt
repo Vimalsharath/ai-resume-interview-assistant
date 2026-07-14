@@ -13,3 +13,6 @@ requests
 pytesseract
 Pillow
 pdf2image
+langchain-groq
+langchain
+langchain-core
