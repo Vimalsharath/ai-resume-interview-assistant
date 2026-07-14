@@ -1,4 +1,10 @@
 # 🤖 AI Interview Assistant
+# 🌐 Live Demo
+
+🚀 Try the deployed application:
+
+[AI Interview Assistant - Live App](https://ai-resume-interview-assistant-ds5sgazdgtebxtruug9hbi.streamlit.app/)
+
 
 An AI-powered interview preparation platform that helps candidates prepare for technical and HR interviews by analyzing resumes, generating personalized interview questions, evaluating answers using Large Language Models (LLMs), and providing detailed performance reports.
 
