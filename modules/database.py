@@ -1,160 +1,96 @@
 import sqlite3
-import hashlib
+import os
+os.makedirs("data", exist_ok=True)
 
 
-DATABASE = "database/users.db"
+DATABASE = "interview.db"
+
+
+
+def get_connection():
+
+    conn = sqlite3.connect(
+        DATABASE,
+        check_same_thread=False
+    )
+
+    return conn
 
 
 
 def create_tables():
 
-    conn = sqlite3.connect(DATABASE)
+    conn = get_connection()
 
     cursor = conn.cursor()
 
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users(
-
+    CREATE TABLE IF NOT EXISTS users
+    (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-
         username TEXT UNIQUE,
-
         password TEXT
-
     )
     """)
 
 
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS interviews(
-
+    CREATE TABLE IF NOT EXISTS interviews
+    (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-
         username TEXT,
-
         question TEXT,
-
         answer TEXT,
-
         feedback TEXT,
-
         score INTEGER
-
     )
     """)
 
 
     conn.commit()
-    conn.close()
-
-
-
-
-def hash_password(password):
-
-    return hashlib.sha256(
-        password.encode()
-    ).hexdigest()
-
-
-
-
-def create_user(username,password):
-
-    conn=sqlite3.connect(DATABASE)
-
-    cursor=conn.cursor()
-
-
-    try:
-
-        cursor.execute(
-        """
-        INSERT INTO users(username,password)
-        VALUES(?,?)
-        """,
-        (
-            username,
-            hash_password(password)
-        ))
-
-
-        conn.commit()
-
-        return True
-
-
-    except:
-
-        return False
-
-
-    finally:
-
-        conn.close()
-
-
-
-
-def verify_user(username,password):
-
-    conn=sqlite3.connect(DATABASE)
-
-    cursor=conn.cursor()
-
-
-    cursor.execute(
-    """
-    SELECT *
-    FROM users
-    WHERE username=? AND password=?
-    """,
-    (
-        username,
-        hash_password(password)
-    ))
-
-
-    result=cursor.fetchone()
-
 
     conn.close()
-
-
-    return result is not None
-
-
 
 
 
 def save_interview(
-        username,
-        question,
-        answer,
-        feedback,
-        score
+    username,
+    question,
+    answer,
+    feedback,
+    score
 ):
 
+    conn = get_connection()
 
-    conn=sqlite3.connect(DATABASE)
-
-    cursor=conn.cursor()
+    cursor = conn.cursor()
 
 
     cursor.execute(
-    """
-    INSERT INTO interviews
-    VALUES(NULL,?,?,?,?,?)
-    """,
-    (
-        username,
-        question,
-        answer,
-        feedback,
-        score
-    ))
+        """
+        INSERT INTO interviews
+        (
+            username,
+            question,
+            answer,
+            feedback,
+            score
+        )
+
+        VALUES (?, ?, ?, ?, ?)
+        """,
+
+        (
+            username,
+            question,
+            answer,
+            feedback,
+            score
+        )
+
+    )
 
 
     conn.commit()
@@ -163,27 +99,26 @@ def save_interview(
 
 
 
-
-
 def get_history(username):
 
+    conn = get_connection()
 
-    conn=sqlite3.connect(DATABASE)
-
-    cursor=conn.cursor()
+    cursor = conn.cursor()
 
 
     cursor.execute(
-    """
-    SELECT question,answer,feedback,score
-    FROM interviews
-    WHERE username=?
-    """,
-    (username,)
+        """
+        SELECT question, answer, feedback, score
+        FROM interviews
+        WHERE username=?
+        """,
+
+        (username,)
+
     )
 
 
-    data=cursor.fetchall()
+    data = cursor.fetchall()
 
 
     conn.close()
