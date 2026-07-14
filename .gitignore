@@ -1,9 +1,9 @@
+data/
+*.db
+uploads/
 __pycache__/
 .env
 users.db
-uploads/
 reports/
 *.pyc
 
-data/
-*.db
