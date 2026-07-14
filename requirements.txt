@@ -10,4 +10,6 @@ playsound==1.2.2
 pandas
 plotly
 requests
+pytesseract
 Pillow
+pdf2image
