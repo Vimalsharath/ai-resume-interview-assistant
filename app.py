@@ -1,5 +1,6 @@
-import streamlit as st
 import os
+
+import streamlit as st
 
 # ==========================================
 # DATABASE
@@ -26,6 +27,7 @@ from modules.auth import (
 from modules.resume_parser import (
     extract_resume_text
 )
+from modules.rag import store_resume
 
 # ==========================================
 # AI ENGINE
@@ -75,13 +77,40 @@ from modules.pdf_report import (
 # ==========================================
 
 st.set_page_config(
-
     page_title="AI Interview Assistant",
-
     page_icon="🤖",
-
     layout="wide"
+)
 
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background: linear-gradient(135deg, #07111f 0%, #0f172a 45%, #111827 100%);
+        color: #f8fafc;
+    }
+    .block-container {
+        padding-top: 1.2rem;
+        padding-bottom: 2rem;
+    }
+    .st-emotion-cache-1wbqy5l, .st-emotion-cache-1wmy9hl {
+        background: rgba(15, 23, 42, 0.75);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(2, 6, 23, 0.25);
+    }
+    .stButton > button {
+        border-radius: 999px;
+        background: linear-gradient(90deg, #38bdf8, #6366f1);
+        color: white;
+        border: none;
+    }
+    .stTextInput > div > div > input, .stTextArea > div > textarea {
+        border-radius: 12px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
 # ==========================================
@@ -95,33 +124,21 @@ create_tables()
 # ==========================================
 
 default_states = {
-
     "logged_in": False,
-
     "username": "",
-
     "resume_text": "",
-
     "report": "",
-
     "questions": [],
-
     "current_question": 0,
-
     "answers": [],
-
     "feedbacks": [],
-
     "scores": [],
-
     "voice_answer": "",
-
     "mode": "Text Interview 📝",
-
     "pdf_file": "",
-
-    "resume_uploaded": False
-
+    "resume_uploaded": False,
+    "resume_summary": "",
+    "last_interview_summary": ""
 }
 
 for key, value in default_states.items():
@@ -145,45 +162,29 @@ if not st.session_state.logged_in:
 # ==========================================
 
 with st.sidebar:
-
     st.title("🤖 AI Interview Assistant")
-
-    st.success(
-
-        f"Welcome\n\n{st.session_state.username}"
-
-    )
-
+    st.caption(f"Welcome back, {st.session_state.username or 'candidate'}")
     st.divider()
 
     page = st.radio(
-
         "Navigation",
-
         [
-
             "🏠 Home",
-
             "📄 Resume",
-
             "🤖 AI Analysis",
-
             "🎤 Interview",
-
             "📊 Dashboard",
-
             "📄 PDF Report"
-
-        ]
-
+        ],
+        horizontal=False
     )
 
     st.divider()
 
-    if st.button("🚪 Logout"):
-
+    if st.button("🚪 Logout", use_container_width=True):
         st.session_state.clear()
-
+        st.session_state.logged_in = False
+        st.session_state.username = ""
         st.rerun()
 
         # ==========================================
@@ -191,153 +192,56 @@ with st.sidebar:
 # ==========================================
 
 if page == "🏠 Home":
-
     st.title("🤖 AI Interview Assistant")
+    st.caption("A premium interview preparation experience powered by AI")
 
-    st.caption(
-        "AI Powered Resume Analyzer & Interview Preparation System"
-    )
+    hero_col1, hero_col2 = st.columns([1.3, 0.9], gap="large")
+    with hero_col1:
+        st.markdown(
+            """
+            <div style='padding: 1rem 0;'>
+            <h3 style='margin-bottom: 0.4rem;'>Practice like you are preparing for a real hiring round.</h3>
+            <p style='color: #cbd5e1; line-height: 1.6;'>Upload your resume, get AI-generated interview questions, and receive detailed evaluation feedback with a polished and professional workflow.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("🚀 Start Your Interview", use_container_width=True):
+            st.session_state["page"] = "🎤 Interview"
+            st.rerun()
+
+    with hero_col2:
+        st.metric("Resume Status", "Uploaded ✅" if st.session_state.resume_uploaded else "Pending ❌")
+        st.metric("Questions Ready", len(st.session_state.questions))
+        st.metric("Average Score", round(sum(st.session_state.scores) / len(st.session_state.scores), 2) if st.session_state.scores else 0)
 
     st.write("---")
 
     col1, col2, col3 = st.columns(3)
-
     with col1:
-
-        if st.session_state.resume_uploaded:
-
-            status = "Uploaded ✅"
-
-        else:
-
-            status = "Not Uploaded ❌"
-
-        st.metric(
-
-            "Resume",
-
-            status
-
-        )
-
+        st.success("📄 Resume Upload")
+        st.caption("Upload a PDF resume and let the system extract the key details.")
     with col2:
-
-        st.metric(
-
-            "Questions",
-
-            len(st.session_state.questions)
-
-        )
-
+        st.success("🤖 AI Analysis")
+        st.caption("Generate a strong personalized interview report from your background.")
     with col3:
-
-        if len(st.session_state.scores) > 0:
-
-            average = sum(
-
-                st.session_state.scores
-
-            ) / len(
-
-                st.session_state.scores
-
-            )
-
-        else:
-
-            average = 0
-
-        st.metric(
-
-            "Average Score",
-
-            round(average, 2)
-
-        )
+        st.success("🎤 Voice & Text Interview")
+        st.caption("Practice in voice mode or text mode with real-time evaluation.")
 
     st.write("---")
 
+    st.subheader("✨ What this experience offers")
     left, right = st.columns(2)
-
     with left:
-
-        st.subheader("🚀 Features")
-
-        st.markdown("""
-
-- 📄 Resume Upload
-- 🔍 OCR Resume Reader
-- 🤖 AI Resume Analysis
-- 🎤 AI Mock Interview
-- 🎧 Voice Interview
-- 📊 AI Answer Evaluation
-- 📈 Interview Dashboard
-- 📄 PDF Interview Report
-
-""")
-
+        st.markdown("- Professional interview preparation flow")
+        st.markdown("- Resume-driven personalized questions")
+        st.markdown("- Structured AI feedback and scoring")
+        st.markdown("- Persistent interview history and reporting")
     with right:
-
-        st.subheader("📋 Workflow")
-
-        st.markdown("""
-
-1. Upload Resume
-
-2. Generate AI Resume Analysis
-
-3. Start AI Interview
-
-4. Answer Questions
-
-5. Receive AI Feedback
-
-6. Download PDF Report
-
-7. View Dashboard
-
-""")
-
-    st.write("---")
-
-    st.info(
-        "Use the left sidebar to navigate through each module."
-    )
-
-    st.subheader("📌 Interview Process")
-
-    st.progress(0)
-
-    st.markdown("""
-### Interview Workflow
-
-Upload Resume
-
-⬇
-
-AI Resume Analysis
-
-⬇
-
-Generate Interview Questions
-
-⬇
-
-Text / Voice Interview
-
-⬇
-
-AI Evaluation
-
-⬇
-
-Interview Dashboard
-
-⬇
-
-PDF Report
-""")
+        st.markdown("- Fast onboarding and polished UI")
+        st.markdown("- Responsive dashboard and progress tracking")
+        st.markdown("- Secure authentication and persistent storage")
+        st.markdown("- Modern voice interaction support")
     
     # ==========================================
 # RESUME PAGE
@@ -402,10 +306,12 @@ elif page == "📄 Resume":
         ):
 
             resume_text = extract_resume_text(
-
-                file_path
-
+                 file_path
             )
+  
+        if resume_text.strip():
+    
+            store_resume(resume_text)
 
         st.session_state.resume_text = resume_text
 

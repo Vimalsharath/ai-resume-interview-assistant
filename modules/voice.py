@@ -1,76 +1,36 @@
-import speech_recognition as sr
-import pyttsx3
+import json
+from pathlib import Path
 
+import streamlit.components.v1 as components
+
+
+_COMPONENT_PATH = Path(__file__).resolve().parent / "voice_recorder"
+
+_voice_component = components.declare_component(
+    "voice_recorder",
+    path=str(_COMPONENT_PATH),
+)
 
 
 def speak(text):
-
-    engine = pyttsx3.init()
-
-    engine.setProperty(
-        "rate",
-        150
-    )
-
-    engine.say(text)
-
-    engine.runAndWait()
-
+    text = text or ""
+    script = f"""
+    <script>
+    const speechText = {json.dumps(text)};
+    if (window.speechSynthesis) {{
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(speechText);
+        utterance.lang = "en-US";
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+        window.speechSynthesis.speak(utterance);
+    }}
+    </script>
+    """
+    components.html(script, height=0)
 
 
 def listen():
-
-    recognizer = sr.Recognizer()
-
-
-    with sr.Microphone() as source:
-
-
-        print("Adjusting microphone...")
-
-
-        recognizer.adjust_for_ambient_noise(
-            source,
-            duration=1
-        )
-
-
-        print("Listening...")
-
-
-        try:
-
-            audio = recognizer.listen(
-                source,
-                timeout=30,
-                phrase_time_limit=120
-            )
-
-
-        except sr.WaitTimeoutError:
-
-            return "No speech detected"
-
-
-
-    try:
-
-
-        answer = recognizer.recognize_google(
-            audio
-        )
-
-
-        return answer
-
-
-
-    except sr.UnknownValueError:
-
-        return "Could not understand speech"
-
-
-
-    except sr.RequestError:
-
-        return "Speech service unavailable"
+    transcript = _voice_component()
+    return transcript or ""

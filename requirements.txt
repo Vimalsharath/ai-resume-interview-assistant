@@ -3,10 +3,6 @@ groq
 python-dotenv
 PyMuPDF
 reportlab
-SpeechRecognition
-pyttsx3
-gTTS
-playsound==1.2.2
 pandas
 plotly
 requests
@@ -16,3 +12,6 @@ pdf2image
 langchain-groq
 langchain
 langchain-core
+chromadb
+sentence-transformers
+langchain-text-splitters
