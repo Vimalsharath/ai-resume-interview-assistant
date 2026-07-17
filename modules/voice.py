@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import streamlit as st
 import streamlit.components.v1 as components
 
 
@@ -32,5 +33,6 @@ def speak(text):
 
 
 def listen():
-    transcript = _voice_component()
+    key = st.session_state.get("voice_component_key", 0)
+    transcript = _voice_component(key=f"voice_recorder_{key}")
     return transcript or ""

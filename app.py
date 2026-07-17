@@ -134,6 +134,9 @@ default_states = {
     "feedbacks": [],
     "scores": [],
     "voice_answer": "",
+    "voice_pending": False,
+    "voice_recording": False,
+    "voice_component_key": 0,
     "mode": "Text Interview 📝",
     "pdf_file": "",
     "resume_uploaded": False,
@@ -619,25 +622,27 @@ elif page == "🎤 Interview":
                     col1, col2 = st.columns(2)
 
                     with col1:
-
                         if st.button("🔊 Speak Question"):
                             speak(question)
 
                     with col2:
-
                         if st.button("🎙 Record Voice Answer"):
                             st.session_state.voice_answer = ""
                             st.session_state.voice_recording = True
+                            st.session_state.voice_pending = True
+                            st.session_state.voice_component_key = st.session_state.get("voice_component_key", 0) + 1
                             st.rerun()
 
-                    if st.session_state.get("voice_recording", False):
+                    if st.session_state.get("voice_pending", False):
                         st.info("Microphone is active. Speak clearly and wait for the transcript to appear.")
                         answer = listen()
-
                         if answer:
                             st.session_state.voice_answer = answer
+                            st.session_state.voice_pending = False
                             st.session_state.voice_recording = False
                             st.rerun()
+                        elif not st.session_state.get("voice_recording", False):
+                            st.session_state.voice_pending = False
 
                     answer = st.session_state.get("voice_answer", "")
 
