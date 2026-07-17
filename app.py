@@ -620,42 +620,30 @@ elif page == "🎤 Interview":
 
                     with col1:
 
-                        if st.button(
-                            "🔊 Speak Question"
-                        ):
-
+                        if st.button("🔊 Speak Question"):
                             speak(question)
 
                     with col2:
 
-                        if st.button(
-                            "🎙 Record Voice Answer"
-                        ):
+                        if st.button("🎙 Record Voice Answer"):
+                            st.session_state.voice_answer = ""
+                            st.session_state.voice_recording = True
+                            st.rerun()
 
-                            with st.spinner(
-                                "Listening..."
-                            ):
+                    if st.session_state.get("voice_recording", False):
+                        st.info("Microphone is active. Speak clearly and wait for the transcript to appear.")
+                        answer = listen()
 
-                                answer = listen()
-
+                        if answer:
                             st.session_state.voice_answer = answer
+                            st.session_state.voice_recording = False
+                            st.rerun()
 
-                    answer = st.session_state.get(
-                        "voice_answer",
-                        ""
-                    )
+                    answer = st.session_state.get("voice_answer", "")
 
                     if answer != "":
-
-                        st.success(
-                            "Voice Recorded Successfully"
-                        )
-
-                        st.text_area(
-                            "Recorded Answer",
-                            answer,
-                            height=150
-                        )
+                        st.success("Voice Recorded Successfully")
+                        st.text_area("Recorded Answer", answer, height=150)
 
                 # ==========================================
                 # TEXT MODE

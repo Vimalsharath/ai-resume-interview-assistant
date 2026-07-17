@@ -36,6 +36,7 @@
       const button = document.getElementById('record-btn');
       let recognition;
       let listening = false;
+      let started = false;
 
       function setStatus(message) {
         status.textContent = message;
@@ -43,6 +44,20 @@
 
       function resetButton() {
         button.textContent = 'Start Recording';
+      }
+
+      function startListening() {
+        if (!recognition) {
+          setStatus('Speech recognition is not supported in this browser.');
+          return;
+        }
+
+        if (listening || started) {
+          return;
+        }
+
+        started = true;
+        recognition.start();
       }
 
       if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -60,6 +75,7 @@
 
         recognition.onerror = (event) => {
           listening = false;
+          started = false;
           resetButton();
           const message = event.error === 'not-allowed' ? 'Microphone permission was denied.' : `Voice input unavailable: ${event.error}`;
           setStatus(message);
@@ -68,6 +84,7 @@
 
         recognition.onend = () => {
           listening = false;
+          started = false;
           resetButton();
         };
 
@@ -94,7 +111,11 @@
           return;
         }
 
-        recognition.start();
+        startListening();
+      });
+
+      window.addEventListener('load', () => {
+        setTimeout(startListening, 250);
       });
     </script>
   </body>
